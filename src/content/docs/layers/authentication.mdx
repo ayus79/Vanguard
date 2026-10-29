@@ -1,0 +1,60 @@
+---
+title: Authentication
+description: Layer 03. Verify identity with API keys, JWTs or mutual TLS.
+section: Layers
+order: 3
+---
+
+**LAYER 03 // AUTHENTICATION.** Establish who is calling. Failures return `401` with a `WWW-Authenticate` header.
+
+## API keys
+
+```yaml
+auth:
+  type: api_key
+  header: X-API-Key
+  store: file:/etc/vanguard/keys.yaml
+```
+
+Keys are stored as salted hashes. A key maps to an identity and a list of scopes.
+
+## JWT
+
+```yaml
+auth:
+  type: jwt
+  jwks_url: https://id.example.com/.well-known/jwks.json
+  issuer: https://id.example.com/
+  audience: payments-api
+  leeway: 30s
+```
+
+Vanguard verifies the signature, `exp`, `nbf`, issuer and audience. JWKS documents are cached and refreshed when an unknown `kid` is seen, with a cooldown to avoid hammering the identity provider.
+
+Algorithms are an allow-list (`RS256`, `ES256` by default). `none` is never accepted.
+
+## Mutual TLS
+
+```yaml
+auth:
+  type: mtls
+  ca_bundle: /etc/vanguard/clients-ca.pem
+  identity_from: subject.common_name
+```
+
+Use mTLS for service-to-service traffic. The client certificate subject becomes the caller identity.
+
+## Combining methods
+
+List several methods and the first to succeed wins:
+
+```yaml
+auth:
+  any_of:
+    - { type: jwt, jwks_url: https://id.example.com/.well-known/jwks.json }
+    - { type: api_key, header: X-API-Key }
+```
+
+## What your service receives
+
+On success Vanguard strips any incoming identity headers and adds trusted ones, such as `X-Vanguard-User` and `X-Vanguard-Scopes`. Your service can rely on them as long as it only accepts traffic from the gateway.

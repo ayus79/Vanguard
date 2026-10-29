@@ -1,0 +1,40 @@
+---
+interface Props {
+  wordmark?: boolean;
+  class?: string;
+}
+const { wordmark = true, class: className } = Astro.props;
+const shield = 'M16 1.2 L28.5 5.4 V15 C28.5 22.6 23 27.6 16 30.8 C9 27.6 3.5 22.6 3.5 15 V5.4 Z';
+const layers = Array.from({ length: 6 }, (_, i) => 0.8 + i * 5.2);
+const letters = ['M0 0 L8 20 L16 0', 'M0 20 L8 0 L16 20 M3.5 13 H12.5', 'M0 20 V0 L16 20 V0', 'M16 5.5 C14.5 2 11.8 0 8.5 0 C3.6 0 0 4.2 0 10 C0 15.8 3.6 20 8.5 20 C13 20 16 16.8 16 11.5 H9', 'M0 0 V12 A8 8 0 0 0 16 12 V0', 'M0 20 L8 0 L16 20 M3.5 13 H12.5', 'M0 20 V0 H9 A5.5 5.5 0 0 1 9 11 H0 M8 11 L16 20', 'M0 0 V20 H6.5 C12 20 16 16 16 10 C16 4 12 0 6.5 0 Z'];
+---
+
+<svg
+  role="img"
+  aria-label="Vanguard"
+  viewBox={wordmark ? '0 0 218 32' : '0 0 32 32'}
+  class={className}
+  fill="none"
+>
+  <defs>
+    <clipPath id="vg-shield"><path d={shield}></path></clipPath>
+  </defs>
+  <g clip-path="url(#vg-shield)" fill="var(--c-primary)">
+    {layers.map((y) => <rect x="0" y={y} width="32" height="3.6" />)}
+  </g>
+  {
+    wordmark && (
+      <g
+        transform="translate(46 6)"
+        stroke="currentColor"
+        stroke-width="2.6"
+        stroke-linejoin="miter"
+        stroke-linecap="butt"
+      >
+        {letters.map((d, i) => (
+          <path d={d} transform={`translate(${i * 22} 0)`} />
+        ))}
+      </g>
+    )
+  }
+</svg>

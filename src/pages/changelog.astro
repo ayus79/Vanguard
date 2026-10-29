@@ -1,0 +1,37 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Badge from '../components/Badge.astro';
+
+const entries = (await getCollection('changelog')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const rendered = await Promise.all(entries.map(async (e) => ({ e, Content: (await render(e)).Content })));
+const variant = { feature: 'primary', fix: 'neutral', security: 'success', breaking: 'danger' } as const;
+const fmt = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+---
+
+<BaseLayout title="Changelog" description="Release notes for every Vanguard version.">
+  <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+    <p class="eyebrow text-secondary-fg">Changelog</p>
+    <h1 class="mt-3 text-4xl font-semibold">What's new in Vanguard</h1>
+    <p class="mt-3 text-lg text-muted">Every release, newest first.</p>
+
+    <ol class="mt-12 space-y-14 border-l border-line pl-6 sm:pl-8">
+      {rendered.map(({ e, Content }) => (
+        <li class="relative">
+          <span class="absolute -left-[1.9rem] top-2 size-3 rounded-full border-2 border-primary bg-bg sm:-left-[2.4rem]" aria-hidden="true"></span>
+          <article>
+            <header>
+              <div class="flex flex-wrap items-center gap-3">
+                <h2 id={`v${e.data.version}`} class="text-2xl font-semibold">v{e.data.version}</h2>
+                <time datetime={e.data.date.toISOString()} class="text-sm text-muted">{fmt.format(e.data.date)}</time>
+                {e.data.tags.map((t) => <Badge variant={variant[t]}>{t}</Badge>)}
+              </div>
+              <p class="mt-2 text-muted">{e.data.summary}</p>
+            </header>
+            <div class="prose-docs mt-5"><Content /></div>
+          </article>
+        </li>
+      ))}
+    </ol>
+  </div>
+</BaseLayout>

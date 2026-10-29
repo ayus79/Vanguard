@@ -1,0 +1,55 @@
+---
+title: Edge guard
+description: Layer 01. TLS termination, request size limits and timeouts.
+section: Layers
+order: 1
+---
+
+**LAYER 01 // EDGE GUARD.** The first layer protects the gateway itself. It rejects traffic that is malformed, oversized or too slow before any application logic runs.
+
+## TLS
+
+Terminate TLS in Vanguard by providing a certificate and key:
+
+```yaml
+server:
+  tls:
+    cert: /etc/vanguard/tls.crt
+    key: /etc/vanguard/tls.key
+    min_version: "1.2"
+```
+
+If a load balancer already terminates TLS, omit this block and run Vanguard on a private network.
+
+## Size limits
+
+```yaml
+edge:
+  max_header_size: 16KB
+  max_body_size: 1MB
+```
+
+Requests that exceed a limit receive `431` for headers or `413` for bodies. The body limit is enforced while streaming, so an oversized upload is cut off without being buffered in memory.
+
+## Timeouts
+
+```yaml
+edge:
+  timeouts:
+    read: 10s       # time to receive the full request
+    idle: 60s       # keep-alive idle time
+    upstream: 30s   # time to wait for the upstream response
+```
+
+Slow clients are dropped with `408`. Short read timeouts are the simplest defense against slow-loris style attacks.
+
+## Per-route overrides
+
+Routes that accept uploads can raise the body limit locally:
+
+```yaml
+routes:
+  - path: /uploads/*
+    upstream: http://files.internal:9000
+    edge: { max_body_size: 50MB }
+```

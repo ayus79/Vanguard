@@ -1,0 +1,21 @@
+---
+import { Code } from 'astro:components';
+import type { ComponentProps } from 'astro/types';
+interface Props {
+  code: string;
+  lang?: ComponentProps<typeof Code>['lang'];
+  title?: string;
+}
+const { code, lang = 'bash', title } = Astro.props;
+---
+
+<figure class="codeblock overflow-hidden rounded-xl border border-line bg-code">
+  {
+    title && (
+      <figcaption class="border-b border-line bg-surface px-4 py-2 font-mono text-xs text-muted">
+        {title}
+      </figcaption>
+    )
+  }
+  <Code code={code} lang={lang} theme="github-dark-high-contrast" />
+</figure>

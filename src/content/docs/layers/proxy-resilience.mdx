@@ -1,0 +1,62 @@
+---
+title: Proxy and resilience
+description: Layer 06. Routing, circuit breakers, retries and timeouts.
+section: Layers
+order: 6
+---
+
+**LAYER 06 // PROXY AND RESILIENCE.** The last layer forwards the clean request to your service, and protects the rest of your system when that service misbehaves.
+
+## Routing and upstreams
+
+A route may point to one upstream or several:
+
+```yaml
+routes:
+  - path: /orders/*
+    upstreams:
+      - http://orders-1.internal:8080
+      - http://orders-2.internal:8080
+    load_balancing: round_robin   # round_robin | least_conn | random
+```
+
+Vanguard strips the matched prefix when you set `strip_prefix: true`, and adds `X-Request-Id` if the client did not send one.
+
+## Retries
+
+```yaml
+resilience:
+  retries:
+    attempts: 2
+    backoff: { initial: 100ms, max: 2s, jitter: true }
+    on: [connect_error, 502, 503]
+```
+
+Only idempotent methods are retried by default. Opt a `POST` in explicitly with `retry_unsafe: true` if the upstream supports idempotency keys.
+
+## Circuit breaker
+
+```yaml
+resilience:
+  circuit_breaker:
+    failure_threshold: 5      # consecutive failures
+    recovery_time: 30s
+    half_open_probes: 2
+```
+
+When the breaker is open, Vanguard returns `503` immediately instead of queueing requests behind a failing service.
+
+## Timeouts
+
+`edge.timeouts.upstream` sets the default. Override it per route with `resilience.timeout`.
+
+## Health checks
+
+```yaml
+resilience:
+  health_check:
+    path: /health
+    interval: 10s
+```
+
+Unhealthy upstreams are removed from rotation until they pass again.

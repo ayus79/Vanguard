@@ -1,0 +1,56 @@
+---
+import Logo from './Logo.astro';
+import { SITE } from '../data/site';
+import { url } from '../lib/url';
+const cols = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Introduction', href: '/docs/introduction' },
+      { label: 'Installation', href: '/docs/installation' },
+      { label: 'The six layers', href: '/#layers' },
+      { label: 'Changelog', href: '/changelog' },
+    ],
+  },
+  {
+    title: 'Build',
+    links: [
+      { label: 'Configuration', href: '/docs/configuration' },
+      { label: 'Custom layers', href: '/docs/writing-a-custom-layer' },
+      { label: 'GitHub', href: SITE.github },
+    ],
+  },
+];
+---
+
+<footer class="border-t border-line bg-surface/40">
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr]">
+    <div>
+      <Logo class="h-7 w-auto text-fg" />
+      <p class="mt-4 max-w-xs text-sm text-muted">
+        An open-source API gateway that shields your services in layers.
+      </p>
+    </div>
+    {
+      cols.map((c) => (
+        <nav aria-label={c.title}>
+          <h2 class="mb-4 text-sm font-semibold text-fg">{c.title}</h2>
+          <ul class="space-y-2.5 text-sm">
+            {c.links.map((l) => (
+              <li>
+                <a href={url(l.href)} class="text-muted transition-colors hover:text-primary">
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+  </div>
+  <div class="border-t border-line">
+    <p class="mx-auto max-w-6xl px-4 py-5 text-xs text-muted sm:px-6">
+      © {new Date().getFullYear()} Vanguard contributors. Released under an open-source license.
+    </p>
+  </div>
+</footer>

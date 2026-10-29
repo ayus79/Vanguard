@@ -1,0 +1,61 @@
+---
+title: Request validation
+description: Layer 05. Validate payloads against schemas and sanitize input.
+section: Layers
+order: 5
+---
+
+**LAYER 05 // REQUEST VALIDATION.** Only well-formed requests reach your service. Failures return `400` or `422` with a machine-readable error list.
+
+## Schema checks
+
+Attach a JSON Schema to a route:
+
+```yaml
+routes:
+  - path: /payments
+    methods: [POST]
+    upstream: http://payments.internal:8080
+    validate:
+      content_types: [application/json]
+      body:
+        type: object
+        required: [amount, currency]
+        additionalProperties: false
+        properties:
+          amount: { type: integer, minimum: 1 }
+          currency: { type: string, enum: [USD, EUR, GBP] }
+```
+
+You can also reference an OpenAPI document with `validate.openapi: ./openapi.yaml` and Vanguard will apply the schema for each operation.
+
+## Query and header rules
+
+```yaml
+validate:
+  query:
+    page: { type: integer, minimum: 1, default: 1 }
+  headers:
+    required: [X-Request-Id]
+```
+
+## Sanitization
+
+Sanitization runs after validation and never silently changes the meaning of a valid payload.
+
+| Option | Effect |
+| --- | --- |
+| `strip_headers` | Remove spoofable headers such as `X-Forwarded-User`. |
+| `normalize_paths` | Collapse `//` and resolve `..` segments before routing. |
+| `reject_null_bytes` | Reject any request containing `\0`. |
+| `max_json_depth` | Reject deeply nested JSON that can exhaust parsers. |
+
+## Error format
+
+```json
+{
+  "error": "validation_failed",
+  "layer": "request_validation",
+  "details": [{ "path": "/amount", "message": "must be >= 1" }]
+}
+```

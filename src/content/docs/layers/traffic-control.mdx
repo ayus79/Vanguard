@@ -1,0 +1,51 @@
+---
+title: Traffic control
+description: Layer 02. IP allow and deny rules and rate limiting.
+section: Layers
+order: 2
+---
+
+**LAYER 02 // TRAFFIC CONTROL.** Decide who may talk to the gateway at all, and how often.
+
+## IP rules
+
+```yaml
+traffic:
+  ip:
+    deny: [203.0.113.0/24]
+    allow: []            # empty means everyone not denied
+    trust_proxy_headers: true
+```
+
+When Vanguard sits behind a load balancer, enable `trust_proxy_headers` so the real client address is read from `X-Forwarded-For`. Only enable it if a trusted proxy always sets that header.
+
+## Rate limiting
+
+Limits use a sliding window and can be keyed by IP, API key or authenticated user:
+
+```yaml
+routes:
+  - path: /payments/*
+    upstream: http://payments.internal:8080
+    rate_limit:
+      limit: 100/min
+      key: user          # ip | api_key | user | header:<name>
+      burst: 20
+```
+
+Rejected requests receive `429` with a `Retry-After` header.
+
+### Keying by user
+
+`key: user` needs an authenticated identity, so it is evaluated after [Authentication](/docs/layers/authentication). Vanguard handles the ordering for you: it applies an IP-based fallback limit first and the per-user limit once identity is known.
+
+## Shared state with Redis
+
+By default counters live in process memory. To enforce one limit across several gateway instances, configure Redis:
+
+```yaml
+redis:
+  url: ${REDIS_URL}
+```
+
+> If Redis becomes unreachable, Vanguard fails open or closed according to `rate_limit.on_error` (`allow` or `deny`). The default is `allow`.

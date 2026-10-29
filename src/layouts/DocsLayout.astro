@@ -1,0 +1,120 @@
+---
+import type { MarkdownHeading } from 'astro';
+import BaseLayout from './BaseLayout.astro';
+import { getDocsNav } from '../lib/docs';
+
+interface Props {
+  title: string;
+  description: string;
+  section: string;
+  currentId: string;
+  headings: MarkdownHeading[];
+}
+const { title, description, section, currentId, headings } = Astro.props;
+const nav = await getDocsNav();
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="mx-auto grid max-w-6xl gap-x-10 px-4 py-8 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)_13rem]">
+    <aside class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:pr-2">
+      <details class="mb-6 rounded-lg border border-line bg-surface lg:hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium">Documentation menu</summary>
+        <div class="border-t border-line px-4 py-3">
+          {nav.map((g) => (
+            <div class="mb-4 last:mb-0">
+              <p class="mb-2 text-sm font-semibold">{g.section}</p>
+              <ul>
+                {g.items.map((i) => (
+                  <li>
+                    <a href={i.href} aria-current={i.id === currentId ? 'page' : undefined} class:list={['block py-1.5 text-sm', i.id === currentId ? 'text-primary' : 'text-fg']}>
+                      {i.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      <nav aria-label="Documentation" class="hidden lg:block">
+        {nav.map((g) => (
+          <div class="mb-7">
+            <p class="mb-3 text-sm font-semibold">{g.section}</p>
+            <ul class="border-l border-line">
+              {g.items.map((i) => (
+                <li>
+                  <a
+                    href={i.href}
+                    aria-current={i.id === currentId ? 'page' : undefined}
+                    class:list={[
+                      '-ml-px block border-l py-1.5 pl-4 text-sm transition-colors hover:text-primary',
+                      i.id === currentId ? 'border-primary font-medium text-primary' : 'border-transparent text-muted',
+                    ]}
+                  >
+                    {i.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </aside>
+
+    <article class="min-w-0 pb-16">
+      <header class="mb-8">
+        <p class="eyebrow text-secondary-fg">{section}</p>
+        <h1 class="mt-3 text-4xl font-semibold">{title}</h1>
+        <p class="mt-3 text-lg text-muted">{description}</p>
+      </header>
+      <div class="prose-docs">
+        <slot />
+      </div>
+    </article>
+
+    {toc.length > 0 && (
+      <nav aria-label="On this page" class="hidden xl:sticky xl:top-24 xl:block xl:self-start">
+        <p class="mb-3 text-sm font-semibold">On this page</p>
+        <ul id="toc" class="space-y-2 border-l border-line text-sm">
+          {toc.map((h) => (
+            <li>
+              <a
+                href={`#${h.slug}`}
+                data-toc={h.slug}
+                class:list={['-ml-px block border-l border-transparent text-muted transition-colors hover:text-primary', h.depth === 3 ? 'pl-7' : 'pl-4']}
+              >
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+  </div>
+
+  <script>
+    // Highlight the TOC entry for the heading currently in view.
+    const links = new Map<string, HTMLAnchorElement>();
+    document.querySelectorAll<HTMLAnchorElement>('[data-toc]').forEach((a) => links.set(a.dataset.toc!, a));
+    if (links.size) {
+      const activate = (id: string) =>
+        links.forEach((a, key) => {
+          const on = key === id;
+          a.classList.toggle('!border-primary', on);
+          a.classList.toggle('!text-primary', on);
+          if (on) a.setAttribute('aria-current', 'location');
+          else a.removeAttribute('aria-current');
+        });
+      const io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => e.isIntersecting && activate(e.target.id)),
+        { rootMargin: '-80px 0px -70% 0px' },
+      );
+      links.forEach((_, id) => {
+        const el = document.getElementById(id);
+        if (el) io.observe(el);
+      });
+    }
+  </script>
+</BaseLayout>

@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Section from '../components/Section.astro';
+import Button from '../components/Button.astro';
+import Card from '../components/Card.astro';
+import LayerCard from '../components/LayerCard.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import HeroFlow from '../components/HeroFlow.astro';
+import ArchitectureDiagram from '../components/ArchitectureDiagram.astro';
+import { LAYERS } from '../data/layers';
+import { SITE } from '../data/site';
+
+const routeYaml = `routes:
+  - path: /payments/*
+    upstream: http://payments.internal:8080
+    auth:
+      type: jwt
+      jwks_url: https://id.example.com/.well-known/jwks.json
+    rate_limit:
+      limit: 100/min
+      key: user
+    authorize:
+      scopes: [payments:write]
+`;
+
+const quickstart = `pip install vanguard-gateway
+vanguard init                      # writes vanguard.yaml
+vanguard run --config vanguard.yaml`;
+
+const configPoints = [
+  ['jwt', 'Tokens are verified against your JWKS. No token, no entry.'],
+  ['100/min per user', 'Rate limits follow the identity, not the IP, and are shared across instances via Redis.'],
+  ['payments:write', 'Scopes are checked before the request is ever proxied.'],
+  ['upstream', 'Only clean requests reach your service, with trusted headers attached.'],
+];
+
+const features = [
+  ['Observability', 'OpenTelemetry traces and metrics for every layer decision, ready for your existing collector.'],
+  ['Redis-backed rate limiting', 'Sliding windows shared across gateway instances, with an in-memory fallback for development.'],
+  ['Pluggable layer interface', 'Write your own layer in a few lines of Python and slot it anywhere in the pipeline.'],
+  ['Header sanitization', 'Strip spoofable headers on the way in and inject verified identity headers on the way out.'],
+  ['Audit logs', 'Structured, per-request records of who called what and which layer allowed or blocked it.'],
+  ['Config, not code', 'Routes, policies and limits live in versioned YAML that reviewers can actually read.'],
+];
+---
+
+<BaseLayout>
+  <!-- Hero -->
+  <section aria-labelledby="hero-heading" class="relative overflow-hidden border-b border-line">
+    <div class="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1.1fr_1fr] lg:pb-24">
+      <div>
+        <p class="eyebrow text-secondary-fg">Open-source API gateway for Python</p>
+        <h1 id="hero-heading" class="mt-5 text-4xl font-semibold leading-[1.2] sm:text-5xl">
+          Put six layers between the <span class="relative inline-block">internet<svg class="smile pointer-events-none absolute -bottom-[0.26em] left-[-2%] h-[0.34em] w-[104%] overflow-visible text-primary" viewBox="0 0 200 30" preserveAspectRatio="none" fill="none" aria-hidden="true"><path d="M5 21 Q 80 27 195 9" stroke="currentColor" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke" /></svg></span> and <span class="whitespace-nowrap text-primary">your code.</span>
+        </h1>
+        <p class="mt-6 max-w-xl text-lg text-muted">
+          Vanguard sits in front of your backend services and checks every request six times before it
+          gets through: TLS, rate limits, authentication, authorization, validation, and resilient
+          proxying. You configure it in YAML and get back to writing business logic.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <Button href="/docs/installation" size="lg">Get started</Button>
+          <Button href={SITE.github} variant="outline" size="lg" external>
+            View on GitHub<span class="sr-only"> (opens in new tab)</span>
+          </Button>
+        </div>
+      </div>
+      <div class="mx-auto w-full max-w-md lg:max-w-none">
+        <HeroFlow />
+      </div>
+    </div>
+  </section>
+
+  <!-- Layers -->
+  <Section
+    id="layers"
+    eyebrow="The six layers"
+    title="Every request earns its way through."
+    description="Layers run in a fixed order and any of them can reject early, so expensive work only happens for traffic that has already proven itself."
+  >
+    <ol class="list-none divide-y divide-line border-y border-line">
+      {LAYERS.map((layer) => <li><LayerCard layer={layer} /></li>)}
+    </ol>
+  </Section>
+
+  <!-- Config -->
+  <Section
+    id="config"
+    eyebrow="Config, not code"
+    title="Describe the policy. Vanguard enforces it."
+    description="One route, four guarantees. No middleware to wire up and no auth library to keep patched."
+    class="border-y border-line bg-surface/50"
+  >
+    <div class="grid items-start gap-10 lg:grid-cols-[1fr_1.15fr]">
+      <dl class="space-y-6">
+        {configPoints.map(([k, v]) => (
+          <div class="border-l-2 border-secondary pl-5">
+            <dt class="font-mono text-sm font-medium">{k}</dt>
+            <dd class="mt-1 text-muted">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <CodeBlock code={routeYaml} lang="yaml" title="vanguard.yaml" />
+    </div>
+  </Section>
+
+  <!-- Architecture -->
+  <Section
+    id="architecture"
+    eyebrow="Architecture"
+    title="One gateway between the internet and your services."
+    description="Vanguard is a single stateless Python process you can run as many times as you need. Your services never face the public network."
+  >
+    <Card class="p-4 sm:p-8"><ArchitectureDiagram /></Card>
+  </Section>
+
+  <!-- Quickstart -->
+  <Section
+    id="quickstart"
+    eyebrow="Quickstart"
+    title="From install to protected in a minute."
+    class="border-y border-line bg-surface/50"
+  >
+    <div class="grid items-center gap-8 lg:grid-cols-2">
+      <div class="space-y-5 text-lg text-muted">
+        <p>
+          Requires Python 3.11 or newer. The generated config proxies a sample upstream with every
+          layer switched on, so you can watch each one reject something.
+        </p>
+        <Button href="/docs/installation" variant="outline">Read the installation guide</Button>
+      </div>
+      <CodeBlock code={quickstart} lang="bash" title="terminal" />
+    </div>
+  </Section>
+
+  <!-- Features -->
+  <Section id="features" eyebrow="Built for production" title="The plumbing, handled.">
+    <dl class="grid border-t border-line md:grid-cols-2 md:gap-x-16">
+      {features.map(([t, d]) => (
+        <div class="border-b border-line py-6">
+          <dt class="font-display text-lg font-semibold">{t}</dt>
+          <dd class="mt-2 text-muted">{d}</dd>
+        </div>
+      ))}
+    </dl>
+  </Section>
+
+  <!-- CTA -->
+  <section aria-labelledby="cta-heading" class="border-t border-line bg-surface/50">
+    <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-16 sm:px-6 md:flex-row md:items-center md:justify-between">
+      <h2 id="cta-heading" class="max-w-xl text-3xl font-semibold sm:text-4xl">
+        Ready to shield your services?
+      </h2>
+      <div class="flex flex-wrap gap-3">
+        <Button href="/docs/installation" size="lg">Get started</Button>
+        <Button href={SITE.github} variant="outline" size="lg" external>
+          Star on GitHub<span class="sr-only"> (opens in new tab)</span>
+        </Button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .smile { animation: reveal 0.7s 0.35s ease-out both; }
+  }
+  @keyframes reveal {
+    from { clip-path: inset(-20% 100% -20% 0); }
+    to { clip-path: inset(-20% 0 -20% 0); }
+  }
+</style>

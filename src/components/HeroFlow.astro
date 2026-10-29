@@ -1,0 +1,155 @@
+---
+import { pad } from '../data/layers';
+const names = ['Edge guard', 'Traffic control', 'Authentication', 'Authorization', 'Request validation', 'Proxy and resilience'];
+
+// Isometric plates: each layer is a rhombus with a little thickness, stacked so upper plates overlap lower ones.
+const CX = 190, HW = 150, HH = 50, T = 10, GAP = 56, Y0 = 120;
+const cy = (k: number) => Y0 + k * GAP;
+const SVC = { cy: 522, hw: 105, hh: 32 };
+const START = 34;
+
+const top = (c: number, hw: number, hh: number) => `${CX},${c - hh} ${CX + hw},${c} ${CX},${c + hh} ${CX - hw},${c}`;
+const left = (c: number, hw: number, hh: number) => `${CX - hw},${c} ${CX},${c + hh} ${CX},${c + hh + T} ${CX - hw},${c + T}`;
+const right = (c: number, hw: number, hh: number) => `${CX},${c + hh} ${CX + hw},${c} ${CX + hw},${c + T} ${CX},${c + hh + T}`;
+
+// blockedAt: layer index where the request dies; null = reaches the services
+const packets: { x: number; blockedAt: number | null; delay: number }[] = [
+  { x: 175, blockedAt: 1, delay: 0 },
+  { x: 215, blockedAt: null, delay: 0.8 },
+  { x: 145, blockedAt: 3, delay: 1.6 },
+  { x: 245, blockedAt: null, delay: 2.4 },
+  { x: 205, blockedAt: 2, delay: 3.2 },
+  { x: 165, blockedAt: null, delay: 4.0 },
+  { x: 235, blockedAt: 4, delay: 4.8 },
+  { x: 190, blockedAt: 0, delay: 5.6 },
+];
+const DUR = 6.8;
+const endY = (p: { blockedAt: number | null }) => (p.blockedAt === null ? SVC.cy : cy(p.blockedAt));
+---
+
+<figure class="hero-flow w-full">
+  <svg viewBox="0 0 600 590" role="img" aria-labelledby="flow-t flow-d" class="h-auto w-full">
+    <title id="flow-t">Requests dropping through Vanguard's six security layers</title>
+    <desc id="flow-d">
+      Requests fall onto a stack of six layers. Red requests are blocked on different layers with a red
+      ripple; green requests pass every layer and land on your services at the bottom.
+    </desc>
+
+    <text x={CX} y="16" text-anchor="middle" class="lbl">Incoming requests</text>
+
+    <!-- services platform -->
+    <g>
+      <polygon points={left(SVC.cy, SVC.hw, SVC.hh)} class="side-l svc-side" />
+      <polygon points={right(SVC.cy, SVC.hw, SVC.hh)} class="side-r svc-side" />
+      <polygon points={top(SVC.cy, SVC.hw, SVC.hh)} class="plate svc-plate" />
+      <line x1={CX + SVC.hw} y1={SVC.cy} x2={CX + SVC.hw + 24} y2={SVC.cy} class="leader svc-leader" />
+      <text x={CX + SVC.hw + 32} y={SVC.cy + 4} class="lbl lbl-svc">Your services</text>
+    </g>
+
+    <!-- layer plates, bottom to top so upper plates overlap lower ones -->
+    {[5, 4, 3, 2, 1, 0].map((k) => (
+      <g>
+        <polygon points={left(cy(k), HW, HH)} class="side-l" />
+        <polygon points={right(cy(k), HW, HH)} class="side-r" />
+        <polygon points={top(cy(k), HW, HH)} class="plate" />
+        <line x1={CX + HW} y1={cy(k)} x2={CX + HW + 24} y2={cy(k)} class="leader" />
+        <circle cx={CX + HW} cy={cy(k)} r="3" class="node" />
+        <text x={CX + HW + 32} y={cy(k) + 4} class="lbl lbl-layer"><tspan class="num">{pad(k + 1)}</tspan>  {names[k]}</text>
+      </g>
+    ))}
+
+    <g>
+      <circle cx="150" cy="578" r="4" class="dot-ok" />
+      <text x="160" y="582" class="lbl">Allowed</text>
+      <circle cx="240" cy="578" r="4" class="dot-bad" />
+      <text x="250" y="582" class="lbl">Blocked</text>
+    </g>
+
+    <g aria-hidden="true">
+      {packets.map((p) => {
+        const ey = endY(p);
+        const kind = p.blockedAt === null ? 'ok' : 'bad';
+        const vars = `--end:${ey - START}px;--delay:-${p.delay}s;--dur:${DUR}s`;
+        return (
+          <g>
+            <ellipse cx={p.x} cy={ey} rx="20" ry="8" class={`ring ring-${kind}`} style={vars} />
+            <circle cx={p.x} cy={START} r="5" class={`pkt pkt-${kind}`} style={vars} />
+          </g>
+        );
+      })}
+    </g>
+  </svg>
+</figure>
+
+<style>
+  .lbl { font-family: var(--font-sans); font-size: 12px; fill: var(--c-muted); }
+  .lbl-layer { fill: var(--c-fg); font-weight: 500; white-space: pre; }
+  .lbl-layer .num { fill: var(--c-primary); font-family: var(--font-display); font-weight: 600; }
+  .lbl-svc { fill: var(--c-success); font-weight: 600; }
+
+  /* Dark (default): raised plates with green-tinted edges so the stack reads against the midnight background. */
+  .plate { fill: var(--c-raised); stroke: color-mix(in srgb, var(--c-primary) 60%, var(--c-line)); stroke-width: 1.5; stroke-linejoin: round; }
+  .side-l { fill: color-mix(in srgb, var(--c-primary) 22%, var(--c-surface)); stroke: color-mix(in srgb, var(--c-primary) 60%, var(--c-line)); stroke-width: 1.5; stroke-linejoin: round; }
+  .side-r { fill: color-mix(in srgb, var(--c-primary) 12%, var(--c-bg)); stroke: color-mix(in srgb, var(--c-primary) 60%, var(--c-line)); stroke-width: 1.5; stroke-linejoin: round; }
+  :global(:root[data-theme='light']) .plate { fill: var(--c-surface); stroke: var(--c-line); stroke-width: 1.25; }
+  :global(:root[data-theme='light']) .side-l { fill: var(--c-raised); stroke: var(--c-line); stroke-width: 1.25; }
+  :global(:root[data-theme='light']) .side-r { fill: color-mix(in srgb, var(--c-raised) 60%, var(--c-bg)); stroke: var(--c-line); stroke-width: 1.25; }
+  .leader { stroke: var(--c-line); stroke-width: 1.25; }
+  .node { fill: var(--c-primary); }
+  .plate.svc-plate { stroke: var(--c-success); stroke-opacity: 0.8; }
+  .side-l.svc-side, .side-r.svc-side { stroke: var(--c-success); stroke-opacity: 0.45; }
+  .svc-leader { stroke: var(--c-success); stroke-opacity: 0.6; }
+  .dot-ok { fill: var(--c-success); }
+  .dot-bad { fill: var(--c-danger); }
+
+  /* Static version (reduced motion): requests rest where they ended, with their ripple. */
+  .pkt { transform: translateY(var(--end)); }
+  .pkt-ok { fill: var(--c-success); }
+  .pkt-bad { fill: var(--c-danger); }
+  .ring { fill: none; stroke-width: 2; opacity: 0.55; }
+  .ring-ok { stroke: var(--c-success); }
+  .ring-bad { stroke: var(--c-danger); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pkt { animation: var(--dur) linear var(--delay) infinite both; }
+    .pkt-ok { animation-name: flow-ok; }
+    .pkt-bad { animation-name: flow-bad; }
+    .ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: var(--dur) ease-out var(--delay) infinite both;
+    }
+    .ring-ok { animation-name: ripple-ok; }
+    .ring-bad { animation-name: ripple-bad; }
+  }
+
+  @keyframes flow-ok {
+    0% { transform: translateY(0); opacity: 0; fill: var(--c-fg); }
+    6% { opacity: 1; }
+    80% { transform: translateY(var(--end)); fill: var(--c-fg); opacity: 1; }
+    84% { fill: var(--c-success); }
+    94% { transform: translateY(var(--end)); fill: var(--c-success); opacity: 1; }
+    100% { transform: translateY(var(--end)); fill: var(--c-success); opacity: 0; }
+  }
+  @keyframes flow-bad {
+    0% { transform: translateY(0); opacity: 0; fill: var(--c-fg); }
+    6% { opacity: 1; }
+    50% { transform: translateY(var(--end)); fill: var(--c-fg); opacity: 1; }
+    53% { transform: translateY(var(--end)); fill: var(--c-danger); }
+    78% { transform: translateY(var(--end)); fill: var(--c-danger); opacity: 1; }
+    90% { transform: translateY(var(--end)); fill: var(--c-danger); opacity: 0; }
+    100% { transform: translateY(var(--end)); opacity: 0; }
+  }
+  @keyframes ripple-bad {
+    0%, 50% { opacity: 0; transform: scale(0.3); }
+    53% { opacity: 0.95; transform: scale(0.4); }
+    78% { opacity: 0; transform: scale(2.4); }
+    100% { opacity: 0; transform: scale(2.4); }
+  }
+  @keyframes ripple-ok {
+    0%, 80% { opacity: 0; transform: scale(0.3); }
+    83% { opacity: 0.95; transform: scale(0.4); }
+    98% { opacity: 0; transform: scale(2.2); }
+    100% { opacity: 0; transform: scale(2.2); }
+  }
+</style>

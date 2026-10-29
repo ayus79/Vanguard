@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+import Badge from '../components/Badge.astro';
+const layers = ['Edge guard', 'Traffic control', 'Authentication', 'Authorization', 'Request validation', 'Proxy + resilience'];
+---
+
+<BaseLayout title="404 · Request blocked" description="The page you requested does not exist." noindex>
+  <section class="relative overflow-hidden">
+    <div class="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 sm:py-28 md:grid-cols-2">
+      <div>
+        <Badge variant="danger">404 Not Found</Badge>
+        <h1 class="mt-6 text-5xl font-semibold sm:text-6xl">
+          Request blocked at <span class="text-primary">layer 404</span>
+        </h1>
+        <p class="mt-5 max-w-md text-lg text-muted">
+          This route isn't defined in any config. The request passed six layers cleanly, then found
+          nothing upstream.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <Button href="/" size="lg">Back to home</Button>
+          <Button href="/docs/introduction" variant="outline" size="lg">Read the docs</Button>
+        </div>
+      </div>
+
+      <div role="img" aria-label="Six layers passed, then blocked at layer 404" class="space-y-2.5">
+        {layers.map((l, i) => (
+          <div class="flex items-center justify-between rounded-md border border-line bg-surface px-4 py-3">
+            <span class="text-sm text-muted">{i + 1}. {l}</span>
+            <span class="font-mono text-xs text-success">pass</span>
+          </div>
+        ))}
+        <div class="flex items-center justify-between rounded-md border border-danger/60 px-4 py-3">
+          <span class="text-sm font-medium text-danger">404. No route matched</span>
+          <span class="font-mono text-xs text-danger">blocked</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

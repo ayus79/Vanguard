@@ -1,0 +1,33 @@
+---
+import { url } from '../lib/url';
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'outline' | 'ghost';
+  size?: 'md' | 'lg';
+  class?: string;
+  external?: boolean;
+}
+const { href, variant = 'primary', size = 'md', class: className = '', external = false } = Astro.props;
+const base =
+  'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 whitespace-nowrap';
+const sizes = { md: 'h-10 px-4 text-sm', lg: 'h-12 px-6 text-base' };
+const variants = {
+  primary: 'bg-cta text-on-cta hover:bg-cta-hover',
+  outline: 'border border-line bg-surface/60 text-fg hover:border-primary hover:text-primary',
+  ghost: 'text-muted hover:text-fg',
+};
+const cls = `${base} ${sizes[size]} ${variants[variant]} ${className}`;
+const ext = external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+---
+
+{
+  href ? (
+    <a href={url(href)} class={cls} {...ext}>
+      <slot />
+    </a>
+  ) : (
+    <button class={cls}>
+      <slot />
+    </button>
+  )
+}

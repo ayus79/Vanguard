@@ -1,0 +1,56 @@
+---
+title: Authorization
+description: Layer 04. Roles, scopes and declarative policies.
+section: Layers
+order: 4
+---
+
+**LAYER 04 // AUTHORIZATION.** Authentication says who they are. Authorization decides what they may do. Failures return `403`.
+
+## Scopes
+
+The simplest check. The caller must hold every listed scope:
+
+```yaml
+authorize:
+  scopes: [payments:write]
+```
+
+Scopes come from the `scope` or `scp` JWT claim, or from the API key record.
+
+## Roles (RBAC)
+
+Define roles once and reference them from routes:
+
+```yaml
+roles:
+  support:
+    scopes: [orders:read, users:read]
+  admin:
+    inherits: [support]
+    scopes: [orders:write, users:write]
+
+routes:
+  - path: /admin/**
+    upstream: http://admin.internal:8080
+    authorize: { roles: [admin] }
+```
+
+Roles are read from the `roles` claim by default. Change it with `authorize.role_claim`.
+
+## Policies
+
+For rules that depend on the request, use an expression:
+
+```yaml
+authorize:
+  policy: >
+    request.method == "GET"
+    or (identity.claims.tenant == request.path_params.tenant_id)
+```
+
+Expressions are evaluated in a sandbox with no access to the filesystem or network, and are compiled at startup so mistakes surface in `vanguard check`.
+
+## Decision logging
+
+Every denial is written to the [audit log](/docs/configuration) with the rule that rejected it, which makes policy debugging much faster.

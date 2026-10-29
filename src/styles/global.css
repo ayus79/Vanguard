@@ -1,0 +1,244 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens. Edit the values in :root (dark, default) and
+ * :root[data-theme='light'] — Tailwind utilities read them via @theme below.
+ */
+:root {
+  --c-bg: #070b14;
+  --c-surface: #0e1526;
+  --c-raised: #152038;
+  --c-line: #1e2a44;
+  --c-primary: #22e58c;
+  --c-primary-hover: #5aeea8;
+  --c-on-primary: #04140c;
+  --c-cta: #22e58c; /* button fill: same bright green in both themes */
+  --c-cta-hover: #5aeea8;
+  --c-on-cta: #04140c;
+  --c-secondary: #7c5cff;
+  --c-secondary-hover: #9479ff;
+  --c-secondary-fg: #a690ff; /* violet as small text (AA on dark) */
+  --c-success: #22e58c;
+  --c-danger: #ff4d6d;
+  --c-fg: #e6edf7;
+  --c-muted: #8b97ad;
+  --c-code: #0a1020;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --c-bg: #f5f7fc;
+  --c-surface: #ffffff;
+  --c-raised: #eaeef8;
+  --c-line: #d0d9ea;
+  --c-primary: #0a7a46; /* green, darkened for text contrast */
+  --c-primary-hover: #07603a;
+  --c-on-primary: #ffffff;
+  --c-cta: #22e58c;
+  --c-cta-hover: #5aeea8;
+  --c-on-cta: #04140c;
+  --c-secondary: #5a3de0;
+  --c-secondary-hover: #4a2fc4;
+  --c-secondary-fg: #5a3de0;
+  --c-success: #0a7a46;
+  --c-danger: #c4254a;
+  --c-fg: #0e1526;
+  --c-muted: #526078;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-raised: var(--c-raised);
+  --color-line: var(--c-line);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-on-primary: var(--c-on-primary);
+  --color-cta: var(--c-cta);
+  --color-cta-hover: var(--c-cta-hover);
+  --color-on-cta: var(--c-on-cta);
+  --color-secondary: var(--c-secondary);
+  --color-secondary-hover: var(--c-secondary-hover);
+  --color-secondary-fg: var(--c-secondary-fg);
+  --color-success: var(--c-success);
+  --color-danger: var(--c-danger);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-code: var(--c-code);
+  --font-sans: 'IBM Plex Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'IBM Plex Sans Variable', ui-sans-serif, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--c-bg);
+    color: var(--c-fg);
+    scroll-padding-top: 5rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+  body {
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--c-primary) 35%, transparent);
+  }
+}
+
+/* Small section label: plain, not shouty. */
+.eyebrow {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* ---------- Code blocks ---------- */
+pre.astro-code {
+  background-color: var(--c-code) !important;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--c-line);
+  border-radius: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.75;
+  tab-size: 2;
+}
+.codeblock pre.astro-code {
+  border: 0;
+  border-radius: 0;
+}
+.code-wrap {
+  position: relative;
+}
+.code-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c9d4e6;
+  background: #152038;
+  border: 1px solid #2a3a5e;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+}
+.code-copy:hover {
+  border-color: var(--c-primary);
+  color: #fff;
+}
+
+/* ---------- Docs prose ---------- */
+.prose-docs {
+  color: var(--c-fg);
+  line-height: 1.75;
+  font-size: 1rem;
+}
+.prose-docs > * + * {
+  margin-top: 1.1rem;
+}
+.prose-docs h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--c-line);
+}
+.prose-docs h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 2rem;
+}
+.prose-docs p,
+.prose-docs li {
+  color: color-mix(in srgb, var(--c-fg) 88%, var(--c-muted));
+}
+.prose-docs a {
+  color: var(--c-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-docs a:hover {
+  color: var(--c-primary-hover);
+}
+.prose-docs ul,
+.prose-docs ol {
+  padding-left: 1.4rem;
+}
+.prose-docs ul {
+  list-style: disc;
+}
+.prose-docs ol {
+  list-style: decimal;
+}
+.prose-docs li + li {
+  margin-top: 0.35rem;
+}
+.prose-docs li::marker {
+  color: var(--c-muted);
+}
+.prose-docs :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--c-raised);
+  border: 1px solid var(--c-line);
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.35rem;
+  color: var(--c-fg);
+}
+.prose-docs table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  display: block;
+  overflow-x: auto;
+}
+.prose-docs th,
+.prose-docs td {
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--c-line);
+  vertical-align: top;
+}
+.prose-docs th {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-muted);
+}
+.prose-docs blockquote {
+  border-left: 3px solid var(--c-primary);
+  background: var(--c-surface);
+  padding: 0.75rem 1.1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.prose-docs blockquote p {
+  margin: 0;
+}
+.prose-docs hr {
+  border-color: var(--c-line);
+}

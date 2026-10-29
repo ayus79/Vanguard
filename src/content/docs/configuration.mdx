@@ -1,0 +1,58 @@
+---
+title: Configuration
+description: The structure of vanguard.yaml, global settings, routes and environment variables.
+section: Getting started
+order: 3
+---
+
+Vanguard is configured with a single YAML file. It has global settings that apply to every request and a list of routes that opt into layers.
+
+## File structure
+
+```yaml
+server:
+  host: 0.0.0.0
+  port: 8443
+  tls:
+    cert: /etc/vanguard/tls.crt
+    key: /etc/vanguard/tls.key
+
+edge:
+  max_body_size: 1MB
+  timeouts: { read: 10s, upstream: 30s }
+
+redis:
+  url: ${REDIS_URL}
+
+routes:
+  - path: /payments/*
+    upstream: http://payments.internal:8080
+    auth: { type: jwt, jwks_url: https://id.example.com/.well-known/jwks.json }
+    rate_limit: { limit: 100/min, key: user }
+    authorize: { scopes: [payments:write] }
+```
+
+## Routes
+
+Each route matches a path pattern and describes the policy for it.
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `path` | string | Glob pattern. `*` matches one segment, `**` matches any depth. |
+| `methods` | list | Optional. Defaults to all methods. |
+| `upstream` | URL | Where clean requests are forwarded. |
+| `auth` | object | Authentication settings. See [Authentication](/docs/layers/authentication). |
+| `rate_limit` | object | See [Traffic control](/docs/layers/traffic-control). |
+| `authorize` | object | See [Authorization](/docs/layers/authorization). |
+| `validate` | object | See [Request validation](/docs/layers/request-validation). |
+| `resilience` | object | See [Proxy and resilience](/docs/layers/proxy-resilience). |
+
+Routes are matched top to bottom and the first match wins, so list specific paths before broad ones.
+
+## Environment variables
+
+Any string value can reference an environment variable with `${NAME}` or `${NAME:-default}`. Secrets should always come from the environment, never from the file.
+
+## Reloading
+
+Send `SIGHUP` to reload the configuration without dropping connections. If the new file fails validation, the running configuration is kept and the error is logged.

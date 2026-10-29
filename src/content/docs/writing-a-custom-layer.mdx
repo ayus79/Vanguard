@@ -1,0 +1,75 @@
+---
+title: Writing a custom layer
+description: Extend the pipeline with your own Python layer.
+section: Extending
+order: 1
+---
+
+Every built-in layer implements the same small interface, and so can yours. A custom layer can inspect or modify a request, reject it, or pass it on.
+
+## The interface
+
+```python
+from vanguard.layers import Layer, RequestContext, Decision, NextLayer
+
+
+class GeoBlockLayer(Layer):
+    """Reject requests from blocked countries."""
+
+    name = "geo_block"
+
+    def __init__(self, blocked: list[str]):
+        self.blocked = set(blocked)
+
+    async def handle(self, ctx: RequestContext, call_next: NextLayer) -> Decision:
+        country = ctx.request.headers.get("cf-ipcountry", "")
+        if country in self.blocked:
+            return Decision.deny(status=403, reason=f"country {country} blocked")
+        return await call_next(ctx)
+```
+
+`handle` receives a `RequestContext` with the request, the resolved route and any identity set by earlier layers. Return `Decision.deny(...)` to stop the request, or `await call_next(ctx)` to continue.
+
+## Register it
+
+Expose a factory with an entry point in your `pyproject.toml`:
+
+```toml
+[project.entry-points."vanguard.layers"]
+geo_block = "my_package.geo:GeoBlockLayer"
+```
+
+## Use it in config
+
+Place the layer anywhere in the pipeline with `after`:
+
+```yaml
+layers:
+  - use: geo_block
+    after: traffic_control
+    with:
+      blocked: [XX, YY]
+```
+
+## Testing
+
+Vanguard ships a test client that runs your layer without a network:
+
+```python
+import pytest
+from vanguard.testing import make_context
+
+@pytest.mark.asyncio
+async def test_blocks_country():
+    layer = GeoBlockLayer(["XX"])
+    ctx = make_context(headers={"cf-ipcountry": "XX"})
+    decision = await layer.handle(ctx, call_next=lambda c: None)
+    assert decision.status == 403
+```
+
+## Guidelines
+
+- Keep layers **fast**; they run on every request. Do I/O asynchronously.
+- Never mutate shared state without a lock.
+- Emit a decision reason. It appears in the audit log and traces.
+- Prefer rejecting with the most specific status code you can.

@@ -1,0 +1,103 @@
+---
+import Logo from './Logo.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { SITE } from '../data/site';
+import { url, stripBase } from '../lib/url';
+const path = stripBase(Astro.url.pathname);
+const links = [
+  { href: '/docs/introduction', label: 'Docs', active: path.startsWith('/docs') },
+  { href: '/#layers', label: 'Layers', active: false },
+  { href: '/changelog', label: 'Changelog', active: path.startsWith('/changelog') },
+];
+---
+
+<header class="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur">
+  <nav aria-label="Main" class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+    <a href={url('/')} aria-label="Vanguard home" class="mr-auto rounded text-fg">
+      <Logo class="h-7 w-auto" />
+    </a>
+
+    <ul id="nav-links" class="hidden items-center gap-1 md:flex">
+      {
+        links.map((l) => (
+          <li>
+            <a
+              href={url(l.href)}
+              aria-current={l.active ? 'page' : undefined}
+              class:list={[
+                'rounded-md px-3 py-2 text-sm transition-colors hover:text-primary',
+                l.active ? 'text-primary' : 'text-muted',
+              ]}
+            >
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <a
+          href={SITE.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="rounded-md px-3 py-2 text-sm text-muted transition-colors hover:text-primary"
+        >
+          GitHub<span class="sr-only"> (opens in new tab)</span>
+        </a>
+      </li>
+    </ul>
+
+    <ThemeToggle />
+
+    <button
+      type="button"
+      id="menu-btn"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      aria-label="Menu"
+      class="inline-flex size-10 items-center justify-center rounded-lg border border-line bg-surface/60 text-muted hover:border-primary hover:text-primary md:hidden"
+    >
+      <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16"></path>
+      </svg>
+    </button>
+  </nav>
+
+  <div id="mobile-menu" hidden class="border-t border-line bg-bg md:hidden">
+    <ul class="mx-auto flex max-w-6xl flex-col px-4 py-3 sm:px-6">
+      {
+        links.map((l) => (
+          <li>
+            <a
+              href={url(l.href)}
+              aria-current={l.active ? 'page' : undefined}
+              class:list={['block rounded-md px-2 py-3 text-base', l.active ? 'text-primary' : 'text-fg']}
+            >
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <a href={SITE.github} target="_blank" rel="noopener noreferrer" class="block rounded-md px-2 py-3 text-base text-fg">
+          GitHub<span class="sr-only"> (opens in new tab)</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  const set = (open: boolean) => {
+    btn?.setAttribute('aria-expanded', String(open));
+    if (menu) menu.hidden = !open;
+  };
+  btn?.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && btn?.getAttribute('aria-expanded') === 'true') {
+      set(false);
+      btn.focus();
+    }
+  });
+</script>

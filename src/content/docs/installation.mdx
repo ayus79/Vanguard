@@ -1,0 +1,63 @@
+---
+title: Installation
+description: Install Vanguard with pip, generate a config and run the gateway.
+section: Getting started
+order: 2
+---
+
+Vanguard requires **Python 3.11 or newer**. Redis is optional, but recommended in production for shared rate limiting.
+
+## Install
+
+We recommend a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install vanguard-gateway
+```
+
+Optional extras:
+
+```bash
+pip install "vanguard-gateway[redis]"   # shared rate limiting
+pip install "vanguard-gateway[otel]"    # OpenTelemetry exporters
+```
+
+## Generate a config
+
+```bash
+vanguard init
+```
+
+This writes a `vanguard.yaml` that proxies a sample upstream with every layer enabled.
+
+## Run
+
+```bash
+vanguard run --config vanguard.yaml --host 0.0.0.0 --port 8443
+```
+
+Check that it is alive:
+
+```bash
+curl -i http://localhost:8443/health
+```
+
+## Run with Docker
+
+```bash
+docker run --rm -p 8443:8443 \
+  -v "$PWD/vanguard.yaml:/etc/vanguard/vanguard.yaml:ro" \
+  vanguard/vanguard:latest
+```
+
+## Validate before you deploy
+
+`vanguard check` parses and validates your configuration without starting a server, which makes it a good CI step:
+
+```bash
+vanguard check --config vanguard.yaml
+```
+
+Next: learn the [configuration format](/docs/configuration).

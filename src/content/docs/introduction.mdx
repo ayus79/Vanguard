@@ -1,0 +1,46 @@
+---
+title: Introduction
+description: What Vanguard is, how a request flows through it, and when to use it.
+section: Getting started
+order: 1
+---
+
+Vanguard is an open-source API gateway written in Python. It runs in front of your backend services and applies a fixed pipeline of six security layers to every request, so your services only ever see traffic that is authenticated, authorized and well-formed.
+
+## Why a layered gateway
+
+Most teams re-implement the same plumbing in every service: JWT parsing, rate limiting, input validation, retry logic. Each copy drifts, and each is another place for a bug to become a vulnerability. Vanguard moves that work to one place that you configure instead of code.
+
+## How a request flows
+
+Every request passes through the layers in order. Any layer can reject the request, and a rejected request stops there.
+
+| Layer | Responsibility | Typical rejection |
+| --- | --- | --- |
+| 01 Edge guard | TLS, size limits, timeouts | `413`, `408` |
+| 02 Traffic control | IP rules, rate limiting | `403`, `429` |
+| 03 Authentication | API keys, JWT, mTLS | `401` |
+| 04 Authorization | RBAC, scopes, policies | `403` |
+| 05 Request validation | Schema checks, sanitization | `400`, `422` |
+| 06 Proxy and resilience | Routing, circuit breakers, retries | `502`, `503` |
+
+Ordering is deliberate: cheap checks run first, so an unauthenticated flood is stopped before it costs a signature verification, and an invalid payload is stopped before it reaches your service.
+
+## What you write
+
+Your policy lives in a single YAML file:
+
+```yaml
+routes:
+  - path: /payments/*
+    upstream: http://payments.internal:8080
+    auth: { type: jwt, jwks_url: https://id.example.com/.well-known/jwks.json }
+    rate_limit: { limit: 100/min, key: user }
+    authorize: { scopes: [payments:write] }
+```
+
+## Next steps
+
+- [Install Vanguard](/docs/installation) and run your first route.
+- Learn the [configuration format](/docs/configuration).
+- Dive into each layer, starting with the [Edge guard](/docs/layers/edge-guard).
