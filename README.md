@@ -71,5 +71,5 @@ Internal links use the `url()` helper in `src/lib/url.ts`, and links inside docs
 
 These are placeholders to replace:
 
-- GitHub URL and `pip install vanguard-gateway` package name in `src/data/site.ts`
+- The `pip install vanguard-gateway` package name in `src/data/site.ts` (the GitHub link already points to this repo)
 - Docs and changelog content is realistic placeholder text, not documentation of a shipped product.
